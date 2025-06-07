@@ -32,6 +32,53 @@ const routes = [
     name: 'about',
     component: () => import('../views/AboutView.vue')
   },
+  // 后台管理路由
+  {
+    path: '/admin',
+    name: 'admin',
+    component: () => import('../views/admin/AdminLayout.vue'),
+    children: [
+      {
+        path: '',
+        redirect: { name: 'admin-login' }
+      },
+      {
+        path: 'login',
+        name: 'admin-login',
+        component: () => import('../views/admin/AdminLogin.vue')
+      },
+      {
+        path: 'dashboard',
+        name: 'admin-dashboard',
+        component: () => import('../views/admin/AdminDashboard.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'projects',
+        name: 'admin-projects',
+        component: () => import('../views/admin/ProjectManagement.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'messages',
+        name: 'admin-messages',
+        component: () => import('../views/admin/MessageCenter.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'contact',
+        name: 'admin-contact',
+        component: () => import('../views/admin/ContactMessages.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'notes',
+        name: 'admin-notes',
+        component: () => import('../views/admin/NoteManagement.vue'),
+        meta: { requiresAuth: true }
+      }
+    ]
+  },
   // 捕获所有未匹配的路由，重定向到首页
   {
     path: '/:pathMatch(.*)*',
@@ -48,9 +95,17 @@ const router = createRouter({
   }
 })
 
-// 添加导航守卫，检查是否来自首页
+// 添加导航守卫，检查权限
 router.beforeEach((to, from, next) => {
-  console.log('导航到:', to.path, '来自:', from.path);
+  if (to.meta.requiresAuth) {
+    // 检查是否已登录
+    const isAuthenticated = localStorage.getItem('admin_token');
+    if (!isAuthenticated) {
+      // 未登录，重定向到登录页
+      next({ name: 'admin-login', query: { redirect: to.fullPath } });
+      return;
+    }
+  }
   next();
 });
 

@@ -1,7 +1,7 @@
 <template>
   <div class="app" :class="{'no-sidebar': !showComponents}">
     <Sidebar v-if="showComponents && showSidebar"/>
-    <div class="main-content" :class="{'home-view': !showComponents, 'full-width': !showSidebar}">
+    <div class="main-content" :class="{'home-view': !showComponents, 'full-width': !showSidebar || isAdminRoute}">
       <router-view />
     </div>
     <MusicPlayer v-if="showComponents && showMusicPlayer"/>
@@ -22,7 +22,8 @@ export default {
     return {
       showComponents: true,
       showSidebar: true,        // 控制侧边栏显示
-      showMusicPlayer: true     // 控制音乐播放器显示
+      showMusicPlayer: true,    // 控制音乐播放器显示
+      isAdminRoute: false       // 是否是管理后台路由
     }
   },
   mounted() {
@@ -34,11 +35,14 @@ export default {
   },
   methods: {
     checkRoute() {
+      // 检查是否是管理后台路由
+      this.isAdminRoute = this.$route.path.startsWith('/admin');
+      
       // 如果是首页，不显示侧边栏和音乐播放器
       this.showComponents = this.$route.path !== '/';
       
-      // 在这里处理关于页面的特殊显示逻辑
-      if (this.$route.path === '/about') {
+      // 在这里处理关于页面和管理后台的特殊显示逻辑
+      if (this.$route.path === '/about' || this.isAdminRoute) {
         this.showSidebar = false;
         this.showMusicPlayer = false;
       } else if (this.$route.path !== '/') {

@@ -110,6 +110,8 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   name: 'NotesView',
   data() {
@@ -120,87 +122,14 @@ export default {
       currentPage: 1,
       itemsPerPage: 6,
       loading: false,
-      tags: ['JavaScript', 'CSS', 'HTML', 'Vue', 'React', 'Node.js', 'Python', 'AI', '数据库', '服务器'],
+      notes: [],
+      tags: [],
       categories: [
-        { id: 'all', name: '全部笔记', icon: 'fa-clipboard-list', count: 16 },
-        { id: 'frontend', name: '前端开发', icon: 'fa-code', count: 8 },
-        { id: 'backend', name: '后端开发', icon: 'fa-server', count: 4 },
-        { id: 'ai', name: 'AI与机器学习', icon: 'fa-robot', count: 2 },
-        { id: 'server', name: '服务器运维', icon: 'fa-hdd', count: 2 }
-      ],
-      notes: [
-        {
-          id: 1,
-          title: 'Vue 3组合式API详解',
-          excerpt: 'Vue 3的组合式API（Composition API）是Vue 3的一大特色，它允许我们使用函数式的方式组织组件逻辑，提高代码的可复用性和可维护性。',
-          date: '2023-06-15',
-          category: 'frontend',
-          tags: ['JavaScript', 'Vue'],
-          link: '/notes/vue3-composition-api'
-        },
-        {
-          id: 2,
-          title: 'Node.js异步编程最佳实践',
-          excerpt: 'Node.js的异步编程模型是其核心特性之一，掌握异步编程的最佳实践对于开发高性能的Node.js应用至关重要。',
-          date: '2023-06-10',
-          category: 'backend',
-          tags: ['JavaScript', 'Node.js'],
-          link: '/notes/nodejs-async-programming'
-        },
-        {
-          id: 3,
-          title: 'CSS Grid布局完全指南',
-          excerpt: 'CSS Grid是一种强大的二维布局系统，它可以帮助我们创建复杂的网页布局，本文将详细介绍CSS Grid的使用方法和技巧。',
-          date: '2023-06-05',
-          category: 'frontend',
-          tags: ['CSS', 'HTML'],
-          link: '/notes/css-grid-guide'
-        },
-        {
-          id: 4,
-          title: '深入理解JavaScript原型链',
-          excerpt: '原型链是JavaScript中重要的概念，理解原型链对于掌握JavaScript的面向对象编程至关重要。',
-          date: '2023-05-30',
-          category: 'frontend',
-          tags: ['JavaScript'],
-          link: '/notes/javascript-prototype-chain'
-        },
-        {
-          id: 5,
-          title: 'TensorFlow入门：构建你的第一个神经网络',
-          excerpt: 'TensorFlow是Google开发的一个开源机器学习框架，本文将指导你使用TensorFlow构建和训练一个简单的神经网络。',
-          date: '2023-05-25',
-          category: 'ai',
-          tags: ['Python', 'AI'],
-          link: '/notes/tensorflow-neural-network'
-        },
-        {
-          id: 6,
-          title: 'Docker容器化应用部署指南',
-          excerpt: 'Docker是一种轻量级的容器化技术，它可以让你将应用及其依赖打包到一个可移植的容器中，本文将介绍如何使用Docker部署应用。',
-          date: '2023-05-20',
-          category: 'server',
-          tags: ['服务器', 'Docker'],
-          link: '/notes/docker-deployment'
-        },
-        {
-          id: 7,
-          title: 'React Hooks深入浅出',
-          excerpt: 'React Hooks是React 16.8引入的新特性，它可以让你在函数组件中使用状态和其他React特性，本文将详细介绍React Hooks的使用。',
-          date: '2023-05-15',
-          category: 'frontend',
-          tags: ['JavaScript', 'React'],
-          link: '/notes/react-hooks'
-        },
-        {
-          id: 8,
-          title: 'MongoDB数据建模最佳实践',
-          excerpt: 'MongoDB是一种流行的NoSQL数据库，合理的数据建模对于应用性能至关重要，本文将介绍MongoDB数据建模的最佳实践。',
-          date: '2023-05-10',
-          category: 'backend',
-          tags: ['数据库', 'MongoDB'],
-          link: '/notes/mongodb-data-modeling'
-        }
+        { id: 'all', name: '全部笔记', icon: 'fa-clipboard-list', count: 0 },
+        { id: 'frontend', name: '前端开发', icon: 'fa-code', count: 0 },
+        { id: 'backend', name: '后端开发', icon: 'fa-server', count: 0 },
+        { id: 'ai', name: 'AI与机器学习', icon: 'fa-robot', count: 0 },
+        { id: 'server', name: '服务器运维', icon: 'fa-hdd', count: 0 }
       ]
     }
   },
@@ -269,13 +198,52 @@ export default {
       this.activeCategory = category;
     }
     
-    // 模拟加载数据
-    this.loading = true;
-    setTimeout(() => {
-      this.loading = false;
-    }, 500);
+    // 获取笔记数据
+    this.fetchNotes();
   },
   methods: {
+    async fetchNotes() {
+      this.loading = true;
+      try {
+        // 获取笔记列表
+        const response = await axios.get('/api/notes');
+        this.notes = response.data.notes;
+        
+        // 获取所有标签
+        const allTags = new Set();
+        this.notes.forEach(note => {
+          note.tags.forEach(tag => allTags.add(tag));
+        });
+        this.tags = Array.from(allTags);
+        
+        // 更新分类数量
+        this.updateCategoryCount();
+      } catch (error) {
+        console.error('获取笔记数据失败:', error);
+      } finally {
+        this.loading = false;
+      }
+    },
+    
+    updateCategoryCount() {
+      // 更新各分类的笔记数量
+      const categoryCounts = {
+        all: this.notes.length
+      };
+      
+      this.notes.forEach(note => {
+        if (!categoryCounts[note.category]) {
+          categoryCounts[note.category] = 0;
+        }
+        categoryCounts[note.category]++;
+      });
+      
+      // 更新分类计数
+      this.categories.forEach(category => {
+        category.count = categoryCounts[category.id] || 0;
+      });
+    },
+    
     searchNotes() {
       this.currentPage = 1; // 重置到第一页
     },
