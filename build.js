@@ -4,16 +4,12 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-// 确保vite.js有执行权限
+// 检查vite.js是否存在
 const vitePath = path.resolve(__dirname, 'node_modules/vite/bin/vite.js');
 
 try {
   if (fs.existsSync(vitePath)) {
-    // 在Linux/macOS上设置执行权限
-    if (process.platform !== 'win32') {
-      execSync(`chmod +x ${vitePath}`);
-      console.log('已为vite.js设置执行权限');
-    }
+    console.log('已找到vite.js文件');
   } else {
     console.error('找不到vite.js文件');
     process.exit(1);
